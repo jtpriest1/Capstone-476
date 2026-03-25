@@ -1,6 +1,6 @@
 """Tests for the TF-IDF classifier — no disk I/O required."""
 import pytest
-from app.ml.text.tfidf_classifier import TfidfLogReg
+from app.model import TfidfLogReg
 
 
 SPAM = [

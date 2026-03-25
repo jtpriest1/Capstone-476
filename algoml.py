@@ -2,7 +2,7 @@
 
 Usage:
   python algoml.py serve          # Start the API server
-  python algoml.py train          # Train default model on a local dataset
+  python algoml.py train          # Train a model on a local dataset
   python algoml.py predict <text> # Quick single-message prediction from the command line
 """
 import sys
@@ -16,10 +16,8 @@ def cmd_serve(args):
 
 def cmd_train(args):
     from app.config import settings
-    from app.training.trainer import run_training
-    from app.schemas.train import TrainRequest, ColumnMapOverride
-    import app.ml.text.tfidf_classifier  # noqa: F401 — register models
-    import app.ml.text.transformer        # noqa: F401
+    from app.main import run_training
+    from app.schemas import TrainRequest, ColumnMapOverride
 
     col_map = None
     if args.text_col or args.label_col or args.pos_value:
@@ -52,16 +50,14 @@ def cmd_train(args):
 
 def cmd_predict(args):
     from app.config import settings
-    from app.ml import registry
-    import app.ml.text.tfidf_classifier  # noqa: F401
-    import app.ml.text.transformer        # noqa: F401
-    from app.data.preprocessor import clean_text
+    from app.model import get_loaded, try_load_from_disk
+    from app.data import clean_text
 
-    registry.try_load_from_disk(settings.model_dir)
+    try_load_from_disk(settings.model_dir)
 
     model_name = args.model or settings.default_model_name
     try:
-        detector = registry.get_loaded(model_name)
+        detector = get_loaded(model_name)
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
@@ -80,13 +76,11 @@ def main():
     parser = argparse.ArgumentParser(description="Scam Detection ML Backend")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    # serve
     sp = sub.add_parser("serve", help="Start the FastAPI server")
     sp.add_argument("--host", default="0.0.0.0")
     sp.add_argument("--port", type=int, default=8000)
     sp.add_argument("--reload", action="store_true", default=False)
 
-    # train
     tp = sub.add_parser("train", help="Train a model on a local dataset")
     tp.add_argument("--model", default="tfidf_logreg")
     tp.add_argument("--dataset", required=True, help="Filename inside datasets/ dir")
@@ -95,7 +89,6 @@ def main():
     tp.add_argument("--label-col", default=None, help="Column name for labels")
     tp.add_argument("--pos-value", default=None, help="Label value that means scam/spam")
 
-    # predict
     pp = sub.add_parser("predict", help="Run a single prediction from the CLI")
     pp.add_argument("text", help="The message text to classify")
     pp.add_argument("--model", default=None)

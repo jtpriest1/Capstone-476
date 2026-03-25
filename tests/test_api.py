@@ -1,10 +1,10 @@
 """Integration tests for the FastAPI endpoints."""
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 
 from app.main import app
-from app.ml.base import TrainingMetrics
+from app.model import TrainingMetrics
 
 
 client = TestClient(app)
@@ -32,7 +32,7 @@ def test_detect_unloaded_model_returns_503():
 
 
 def test_detect_with_loaded_model(monkeypatch):
-    from app.ml import registry as reg
+    import app.model as model_mod
 
     mock_detector = MagicMock()
     mock_detector.name = "tfidf_logreg"
@@ -40,7 +40,7 @@ def test_detect_with_loaded_model(monkeypatch):
     mock_detector.predict.return_value = (True, 0.92)
     mock_detector.explain.return_value = ["free", "won", "prize"]
 
-    monkeypatch.setattr(reg, "_REGISTRY", {"tfidf_logreg": mock_detector})
+    monkeypatch.setattr(model_mod, "_REGISTRY", {"tfidf_logreg": mock_detector})
 
     r = client.post("/api/v1/detect", json={"content": "You won a free prize!"})
     assert r.status_code == 200

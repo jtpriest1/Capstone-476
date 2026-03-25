@@ -1,11 +1,10 @@
 """Tests for the dataset-agnostic loader."""
 import pytest
 import pandas as pd
-import tempfile
 from pathlib import Path
 
 from app.config import ColumnMap
-from app.data.loader import load_dataset, DatasetLoadError
+from app.data import load_dataset, DatasetLoadError
 
 
 @pytest.fixture
