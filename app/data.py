@@ -81,7 +81,10 @@ def load_dataset(
     """
     try:
         if fmt == "csv":
-            df = pd.read_csv(path)
+            try:
+                df = pd.read_csv(path, encoding='utf-8')
+            except UnicodeDecodeError:
+                df = pd.read_csv(path, encoding='latin-1')
         elif fmt == "json":
             df = pd.read_json(path)
         else:
