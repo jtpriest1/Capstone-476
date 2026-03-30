@@ -5,6 +5,15 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 from app.config import ColumnMap, Settings, settings
 from app.data import DatasetLoadError, clean_text, extract_email_parts, load_dataset
 from app.model import (
