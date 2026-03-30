@@ -2,11 +2,11 @@
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, FastAPI, HTTPException
+from fastapi import APIRouter, Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import ColumnMap, Settings, settings
-from app.data import DatasetLoadError, clean_text, extract_email_parts, load_dataset
+from app.data import DatasetLoadError, clean_text, extract_email_parts, extract_text_from_image, load_dataset
 from app.model import (
     ModelNotFoundError,
     ModelNotLoadedError,
@@ -126,6 +126,23 @@ def detect(request: DetectRequest, cfg: Settings = Depends(get_settings)):
 @router.post("/detect/batch", response_model=BatchDetectResponse, tags=["detection"])
 def detect_batch(request: BatchDetectRequest, cfg: Settings = Depends(get_settings)):
     return BatchDetectResponse(results=[_run_detection(item, cfg) for item in request.items])
+
+
+@router.post("/detect/image", response_model=DetectResponse, tags=["detection"])
+async def detect_image(file: UploadFile = File(...), cfg: Settings = Depends(get_settings)):
+    """Upload a screenshot or image. OCR extracts the text, then runs scam detection."""
+    file_bytes = await file.read()
+    extracted_text = extract_text_from_image(file_bytes)
+    if not extracted_text:
+        raise HTTPException(status_code=400, detail="No text could be extracted from image")
+    base = _run_detection(DetectRequest(content=extracted_text), cfg)
+    return DetectResponse(
+        is_scam=base.is_scam,
+        confidence=base.confidence,
+        model_used=base.model_used,
+        explanation=base.explanation,
+        extracted_text=extracted_text,
+    )
 
 
 @router.post("/train", response_model=TrainResponse, tags=["training"])

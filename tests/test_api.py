@@ -50,6 +50,23 @@ def test_detect_with_loaded_model(monkeypatch):
     assert "free" in body["explanation"]
 
 
+def test_detect_image_no_text(monkeypatch):
+    import io
+    from PIL import Image
+    from app import data as data_mod
+
+    # Blank white image — OCR will find no text
+    monkeypatch.setattr(data_mod, "extract_text_from_image", lambda b: "")
+
+    buf = io.BytesIO()
+    Image.new("RGB", (100, 100), color=(255, 255, 255)).save(buf, format="PNG")
+    buf.seek(0)
+
+    r = client.post("/api/v1/detect/image", files={"file": ("blank.png", buf, "image/png")})
+    assert r.status_code == 400
+    assert r.json()["detail"] == "No text could be extracted from image"
+
+
 def test_train_unknown_model_returns_error():
     r = client.post("/api/v1/train", json={
         "model_name": "does_not_exist",

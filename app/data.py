@@ -52,6 +52,22 @@ def extract_email_parts(raw_email: str) -> dict:
     }
 
 
+# ── Image OCR ────────────────────────────────────────────────────────────────
+
+def extract_text_from_image(file_bytes: bytes) -> str:
+    """Run OCR on raw image bytes and return the extracted text (stripped).
+
+    Returns an empty string if no text is found.
+    """
+    import io
+    import pytesseract
+    from PIL import Image
+
+    image = Image.open(io.BytesIO(file_bytes))
+    text = pytesseract.image_to_string(image)
+    return text.strip()
+
+
 # ── Dataset loading ───────────────────────────────────────────────────────────
 
 class DatasetLoadError(Exception):

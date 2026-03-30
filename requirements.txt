@@ -9,6 +9,8 @@ pydantic-settings>=2.6
 python-multipart>=0.0.12
 httpx>=0.28
 pytest>=8.3
+pytesseract>=0.3.10
+Pillow>=10.0
 
 # Optional — uncomment when implementing transformer models
 # torch>=2.2
